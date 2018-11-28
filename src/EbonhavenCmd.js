@@ -1,5 +1,6 @@
 const Rx = require('rxjs');
 const { prompt } = require('inquirer');
+let prompts = new Rx.Subject();
 
 const chalk = require('chalk');
 const Menu = require('./Menu');
@@ -7,35 +8,41 @@ const Menu = require('./Menu');
 const questions = [
     {
         type: 'input',
-        name: 'name',
-        message: 'What is your name?'
+        name: 'initial',
+        message: 'What is your name?',
     }
 ]
 
 module.exports = class EbonhavenCmd {
     static start() {
-        let prompts = new Rx.Subject();
-        prompt(prompts).ui.process.subscribe(this.update, this.error, this.complete);
-        prompts.next(questions);
+        let self = this;
+        prompt(prompts).ui.process.subscribe(EbonhavenCmd.update, EbonhavenCmd.error, EbonhavenCmd.complete);
+        prompts.next(questions[0]);
     }
 
     static menu() {
         const questions = Menu.load();
         console.log(chalk.magenta(`Welcome to the menu!`));
-        prompt(questions).then((res) => {
-            Menu.handle(res);
-        })
+        prompts.next(questions[0]);
     }
 
-    update(res) {
+    static update(res) {
         console.log(res);
+        switch (res.name) {
+            case 'initial':
+                EbonhavenCmd.menu();
+                break;
+            default:
+                EbonhavenCmd.complete();
+        }
+        
     }
 
-    error(err) {
+    static error(err) {
         console.error(err);
     }
 
-    complete() {
+    static complete() {
         process.exit();
     }
 }
